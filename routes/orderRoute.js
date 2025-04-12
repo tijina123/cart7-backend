@@ -6,7 +6,7 @@ const orderControllers = require("../controllers/orderControllers")
 
 // Order Management
 router.get("/", orderControllers.getAllOrder); //→ Get user's orders
-router.get("/details", orderControllers.getAllOrdersByUser); //→ Get single order details by user
+router.get("/details",checkAuth, orderControllers.getAllOrdersByUser); //→ Get single order details by user
 router.get("/check-cart", checkAuth, orderControllers.isproductAvailabe); //→ check is product available
 router.post("/", checkAuth, orderControllers.createOrder); //→ Create a new order (user)
 router.put("/delivery-status/:orderId", orderControllers.orderStatusUpdate); //→ Update order status (admin)

@@ -183,9 +183,12 @@ const getAllOrder = async (req, res) => {
 };
 
 // ✅
+// ✅
 const getAllOrdersByUser = async (req, res) => {
   try {
+
     const userId = req.userId; // Assuming userId is extracted from auth middleware
+    
 
     // Handle missing orderId in params
     if (!userId) {
@@ -199,7 +202,9 @@ const getAllOrdersByUser = async (req, res) => {
       });
     }
 
-    const orders = await Order.find({ user: userId });
+    const orders = await Order.find({ user: userId })
+    .populate("user", "name phone") // Populate user fields (adjust as needed)
+      .populate("orderItems.product", "name sale_price images"); // Populate product fields
 
     // Validation: Check if the user has any orders
     if (!orders) {
@@ -212,7 +217,7 @@ const getAllOrdersByUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Orders retrieved successfully.",
-      orders,
+      orders
     });
   } catch (error) {
     res.status(500).json({
@@ -283,26 +288,26 @@ const orderStatusUpdateOld = async (req, res) => {
 // ✅
 const orderStatusUpdate = async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const { deliveryStatus } = req.body;
+    console.log("orderStatusUpdate");
+    console.log(req.params,req.body);
 
-    if (!orderId) {
-      return res.status(400).json({ message: "Order ID is required" });
-    }
-    if (!deliveryStatus) {
-      return res.status(400).json({ message: "Delivery status is required" });
-    }
+  const { orderId } = req.params;
+  const { newStatus:deliveryStatus } = req.body;
 
-    const validStatuses = [
-      "Pending",
-      "Processing",
-      "Shipped",
-      "Out for Delivery",
-      "Delivered",
-      "Cancelled",
-      "Returned",
-      "Failed Delivery",
-    ];
+console.log(orderId,deliveryStatus);
+
+  if (!orderId) {
+    return res.status(400).json({ message: "Order ID is required" });
+  }
+  if (!deliveryStatus) {
+    return res.status(400).json({ message: "Delivery status is required" });
+  }
+
+  const validStatuses = [
+    "Pending", "Processing", "Shipped", "Out for Delivery",
+    "Delivered", "Cancelled", "Returned", "Failed Delivery"
+  ];
+
 
     // Validate orderId
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
@@ -323,22 +328,16 @@ const orderStatusUpdate = async (req, res) => {
     // Check if the status is being updated to "Returned"
     if (deliveryStatus === "Returned") {
       if (!order.deliveredAt) {
-        return res
-          .status(400)
-          .json({ message: "Order has not been delivered yet" });
+        return res.status(400).json({ message: "Order has not been delivered yet" });
       }
 
       // Calculate the difference between today and deliveredAt
       const deliveredDate = new Date(order.deliveredAt);
       const currentDate = new Date();
-      const diffInDays = Math.floor(
-        (currentDate - deliveredDate) / (1000 * 60 * 60 * 24)
-      );
+      const diffInDays = Math.floor((currentDate - deliveredDate) / (1000 * 60 * 60 * 24));
 
       if (diffInDays > 7) {
-        return res
-          .status(400)
-          .json({ message: "Return period has expired (7 days limit)" });
+        return res.status(400).json({ message: "Return period has expired (7 days limit)" });
       }
     }
 
@@ -352,7 +351,7 @@ const orderStatusUpdate = async (req, res) => {
 
     await order.save();
 
-    res.json({ message: "Delivery status updated successfully", order });
+    res.json({success: true, message: "Delivery status updated successfully", order });
   } catch (error) {
     console.error("Error updating delivery status:", error);
     res.status(500).json({ message: "Internal Server Error" });
