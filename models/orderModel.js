@@ -8,7 +8,7 @@ const orderSchema = new mongoose.Schema(
                 product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
                 quantity: { type: Number, required: true },
             },
-        
+
         // agent: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         shippingAddress: {
             street: String,
@@ -20,6 +20,7 @@ const orderSchema = new mongoose.Schema(
         paymentMethod: { type: String, required: true },
         paymentStatus: { type: String, enum: ["Pending", "Paid", "Failed"], default: "Pending" },
         totalPrice: { type: Number, required: true },
+        balanceTotal: { type: Number, required: true },
         // Delivery Statuses
         deliveryStatus: {
             type: String,

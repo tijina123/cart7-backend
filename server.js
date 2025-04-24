@@ -1,5 +1,6 @@
 const express = require("express")
 const cors = require('cors')
+const morgan = require("morgan");
 const connectDb = require("./config/db");
 
 const categoryRoute = require('./routes/categoryRoute');
@@ -9,10 +10,19 @@ const addressRoute = require('./routes/addressRoute');
 const orderRoute = require('./routes/orderRoute');
 const offerRoute = require('./routes/offerRoute');
 const errorHandle = require("./middlewares/errorHandle");
+const startCronJobs = require("./utils/cronJobs"); // Adjust path if needed
 
 const app = express()
 require('dotenv').config()
+
+//connect to database
 connectDb()
+
+// Start the plan downgrade cron job
+startCronJobs();
+
+// Use morgan middleware
+app.use(morgan("dev")); // 'dev' is a predefined format string
 
 app.use(cors())
 app.use(express.json())

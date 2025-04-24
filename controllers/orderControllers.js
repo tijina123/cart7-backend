@@ -1,4 +1,3 @@
-const axios = require("axios");
 const mongoose = require("mongoose");
 
 const { User } = require("../models/userModel.js");
@@ -17,7 +16,6 @@ const getLast7Days = () => {
   }
   return dates;
 };
-// ***********************************
 
 const salesByCategory = async (req, res) => {
   try {
@@ -182,13 +180,13 @@ const getAllOrder = async (req, res) => {
   }
 };
 
-// ✅
+
 // ✅
 const getAllOrdersByUser = async (req, res) => {
   try {
 
     const userId = req.userId; // Assuming userId is extracted from auth middleware
-    
+
 
     // Handle missing orderId in params
     if (!userId) {
@@ -203,7 +201,7 @@ const getAllOrdersByUser = async (req, res) => {
     }
 
     const orders = await Order.find({ user: userId })
-    .populate("user", "name phone") // Populate user fields (adjust as needed)
+      .populate("user", "name phone") // Populate user fields (adjust as needed)
       .populate("orderItems.product", "name sale_price images"); // Populate product fields
 
     // Validation: Check if the user has any orders
@@ -289,24 +287,24 @@ const orderStatusUpdateOld = async (req, res) => {
 const orderStatusUpdate = async (req, res) => {
   try {
     console.log("orderStatusUpdate");
-    console.log(req.params,req.body);
+    console.log(req.params, req.body);
 
-  const { orderId } = req.params;
-  const { newStatus:deliveryStatus } = req.body;
+    const { orderId } = req.params;
+    const { newStatus: deliveryStatus } = req.body;
 
-console.log(orderId,deliveryStatus);
+    console.log(orderId, deliveryStatus);
 
-  if (!orderId) {
-    return res.status(400).json({ message: "Order ID is required" });
-  }
-  if (!deliveryStatus) {
-    return res.status(400).json({ message: "Delivery status is required" });
-  }
+    if (!orderId) {
+      return res.status(400).json({ message: "Order ID is required" });
+    }
+    if (!deliveryStatus) {
+      return res.status(400).json({ message: "Delivery status is required" });
+    }
 
-  const validStatuses = [
-    "Pending", "Processing", "Shipped", "Out for Delivery",
-    "Delivered", "Cancelled", "Returned", "Failed Delivery"
-  ];
+    const validStatuses = [
+      "Pending", "Processing", "Shipped", "Out for Delivery",
+      "Delivered", "Cancelled", "Returned", "Failed Delivery"
+    ];
 
 
     // Validate orderId
@@ -351,7 +349,7 @@ console.log(orderId,deliveryStatus);
 
     await order.save();
 
-    res.json({success: true, message: "Delivery status updated successfully", order });
+    res.json({ success: true, message: "Delivery status updated successfully", order });
   } catch (error) {
     console.error("Error updating delivery status:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -360,14 +358,11 @@ console.log(orderId,deliveryStatus);
 
 //✅ Create Order and Push to Shiprocket
 const createOrder = async (req, res) => {
-  console.log("createOrder");
 
   try {
     const userId = req.userId;
 
     const { paymentMethod, currency = "INR" } = req.body;
-
-    console.log("paymentMethod", paymentMethod);
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid user ID." });
@@ -406,9 +401,52 @@ const createOrder = async (req, res) => {
           .json({ message: `Insufficient stock for ${product.name}` });
       }
 
-      const orderPrice =
-        (product.sale_price || product.product_price) * quantity;
+      const orderPrice = (product.sale_price || product.product_price) * quantity;
       totalAmount += orderPrice;
+
+      let balanceTotal = null
+
+      const productAgent = await Product.findById(product?._id)
+        .populate({
+          path: "agent",
+          select: "plan planValidUntil", // Only get necessary fields
+        });
+
+
+      if (productAgent.agent?.plan === "plan 8") {
+
+        balanceTotal = (orderPrice * 10 / 100).toFixed(2)
+
+      } else if (productAgent.agent?.plan === "plan 7"){
+
+        balanceTotal = (orderPrice * 12 / 100).toFixed(2)
+
+      }
+       else if (productAgent.agent?.plan === "plan 6"){
+
+        balanceTotal = (orderPrice * 14 / 100).toFixed(2)
+
+      }
+       else if (productAgent.agent?.plan === "plan 5"){
+
+        balanceTotal = (orderPrice * 16 / 100).toFixed(2)
+
+      } else if (productAgent.agent?.plan === "plan 4"){
+
+        balanceTotal = (orderPrice * 18 / 100).toFixed(2)
+
+      } else if (productAgent.agent?.plan === "plan 3"){
+
+        balanceTotal = (orderPrice * 20 / 100).toFixed(2)
+
+      } else if (productAgent.agent?.plan === "plan 2"){
+
+        balanceTotal = (orderPrice * 22 / 100).toFixed(2)
+
+      } else {
+
+        balanceTotal = (orderPrice * 25 / 100).toFixed(2)
+      }
 
       const newOrder = await Order.create({
         user: userId,
@@ -419,6 +457,7 @@ const createOrder = async (req, res) => {
         shippingAddress,
         paymentMethod,
         totalPrice: orderPrice,
+        balanceTotal: orderPrice - balanceTotal
       });
 
       // Reduce stock
@@ -476,7 +515,7 @@ const createOrder = async (req, res) => {
   }
 };
 
-// ✅
+// ✅ 
 const shiprocketWebhook = async (req, res) => {
   try {
     console.log("Webhook Received:", req.body);

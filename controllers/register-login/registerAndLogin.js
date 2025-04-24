@@ -61,13 +61,14 @@ const signup = async (req, res, next) => {
 
     let isCreate = null;
 
+    const PLAN_DURATION_DAYS = 30;
+    
     // Create a new user based on their role
     if (role === "user") {
       isCreate = await User.create({
         name,
         email,
         role,
-        plan,
         isDelers: false,
         password: hashedPassword,
         status: true,
@@ -78,6 +79,8 @@ const signup = async (req, res, next) => {
         deler_name,
         email,
         role,
+        plan,
+        planValidUntil: new Date(Date.now() + PLAN_DURATION_DAYS * 24 * 60 * 60 * 1000),
         isDelers: true,
         password: hashedPassword,
         status: false,

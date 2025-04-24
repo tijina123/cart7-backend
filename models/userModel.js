@@ -28,7 +28,14 @@ const userSchema = new mongoose.Schema(
       match: [/^\d{10}$/, "Phone number must be exactly 10 digits"],
     },
     image: { type: String },
-    plan: { type: String },
+    plan: {
+      type: String,
+      enum: ["premium", "standard", "basic"],
+      default: "basic",
+    },
+    planValidUntil: {
+      type: Date,
+    }, 
     status: {
       type: Boolean,
       required: [true, "Status is required"],
