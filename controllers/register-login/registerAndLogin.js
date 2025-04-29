@@ -127,7 +127,7 @@ const login = async (req, res, next) => {
     }
 
     // Check if user exists in the database
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email , isActive: true  });
 
     if (!user) {
       const error = {

@@ -25,7 +25,7 @@ const getAllCategories = async (res) => {
 // ✅ Get All Categories
 const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find({ isActive: true });
 
     // Validation: Check if categories exist
     if (!categories) {
@@ -46,6 +46,34 @@ const getCategories = async (req, res) => {
       message: "An error occurred while retrieving the categories.",
       error: error.message,
     });
+  }
+};
+
+
+// ✅ Get All Categories
+const allCategories = async (req, res) => {
+  try {
+      const categories = await Category.find();
+
+      // Validation: Check if categories exist
+      if (!categories) {
+          return res.status(400).json({
+              success: false,
+              message: "No categories found. Please add categories first.",
+          });
+      }
+
+      res.status(200).json({
+          success: true,
+          message: "categories retrieved successfully.",
+          categories,
+      });
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: "An error occurred while retrieving the categories.",
+          error: error.message,
+      });
   }
 };
 
@@ -357,6 +385,7 @@ const toggleCategoryStatus = async (req, res) => {
 
 module.exports = {
   getCategories,
+  allCategories,
   getSingleCategory,
   addCategory,
   updateCategory,

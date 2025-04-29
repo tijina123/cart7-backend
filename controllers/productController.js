@@ -19,9 +19,12 @@ const getAllProducts = async (req, res) => {
     let products = null;
 
     if (user.role === "Super Admin") {
+
       // Fetch all products
       products = await Product.find().populate("agent", "name email");
+
     } else if (user.role === "admin") {
+      
       // Fetch only the products added by the admin (agent)
       products = await Product.find({ agent: user._id }).populate(
         "agent",
@@ -35,7 +38,9 @@ const getAllProducts = async (req, res) => {
         message: "No products found. Please add products first.",
       });
     }
+
     return products;
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -49,7 +54,7 @@ const getAllProducts = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     // Fetch all products
-    const products = await Product.find().populate("category");
+    const products = await Product.find({isActive:true}).populate("category");
 
     // Validation: Check if products exist
     if (!products) {
@@ -73,12 +78,33 @@ const getProducts = async (req, res) => {
   }
 };
 
-// ✅ Get products by  users
+// ✅ Get products by  admin
 const getProductsByAgent = async (req, res) => {
   try {
     const userId = req.userId;
 
-    const products = await Product.find({ agent: userId });
+    // const products = await Product.find({ agent: userId }).populate("category");
+    // console.log(products,"=====products==");
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return { success: false, message: "Unauthorized access" };
+    }
+
+    let products = null;
+
+    if (user.role === "Super Admin") {
+
+      // Fetch all products
+      products = await Product.find().populate("category");
+
+    } else if (user.role === "admin") {
+      
+      // Fetch only the products added by the admin (agent)
+      products = await Product.find({ agent: userId }).populate("category");
+    }
+    
 
     if (!products) {
       return res
@@ -86,7 +112,11 @@ const getProductsByAgent = async (req, res) => {
         .json({ message: "No products found for this user" });
     }
 
-    res.status(200).json(products);
+    res.status(200).json({
+      success: true,
+      message: "Products retrieved successfully.",
+      products
+    });
   } catch (error) {
     res.status(500).json({ message: "Error fetching products", error });
   }
@@ -95,7 +125,6 @@ const getProductsByAgent = async (req, res) => {
 // ✅ Get filter products
 const getFilterProducts = async (req, res) => {
   try {
-    console.log("====getFilterProducts");
     
     const { categoryId } = req.params; // Extract category ID from query params
 
@@ -131,19 +160,30 @@ const getProductsByCategory = async (req, res) => {
     const productsByCategory = await Category.aggregate([
       {
         $lookup: {
-          from: "products", // Collection name should match in MongoDB
-          localField: "_id",
-          foreignField: "category",
+          from: "products",
+          let: { categoryId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$category", "$$categoryId"] },
+                    { $eq: ["$isActive", true] },
+                  ],
+                },
+              },
+            },
+          ],
           as: "products",
         },
       },
       {
         $project: {
-          name: 1, // Category name
+          name: 1,
           description: 1,
           offer_price: 1,
           isActive: 1,
-          products: 1, // Include all products in that category
+          products: 1,
         },
       },
     ]);
@@ -157,6 +197,7 @@ const getProductsByCategory = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // ✅ Get Single product
 const getSingleProduct = async (req, res) => {

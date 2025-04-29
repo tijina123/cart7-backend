@@ -5,6 +5,7 @@ const categoryController = require("../controllers/categoryController")
 
 // Category Management
 router.get("/",categoryController.getCategories);//→ Get all category
+router.get("/all",categoryController.allCategories);//→ Get all category
 router.get("/:id",categoryController.getSingleCategory);//→ Get a single category by ID
 router.post("/admin", categoryController.addCategory); //→ Create a new category (admin)
 router.put("/admin/:id", categoryController.updateCategory ); //→ Update a category (admin)

@@ -8,6 +8,7 @@ const productController = require("../controllers/productController")
 
 // Product Management
 router.get("/",productController.getProducts);//→ Get all products
+router.get("/by-agent", checkAuth, productController.getProductsByAgent);//→ Get all products
 router.get("/filter/:categoryId",productController.getFilterProducts);//→ Filter products
 router.get("/by-category",productController.getProductsByCategory);// GET all products grouped by category
 router.get("/:id",productController.getSingleProduct);//→ Get a single product by ID
