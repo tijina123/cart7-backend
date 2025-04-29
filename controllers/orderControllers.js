@@ -412,6 +412,8 @@ const createOrder = async (req, res) => {
           select: "plan planValidUntil", // Only get necessary fields
         });
 
+        console.log(productAgent.agent?.plan ,"====productAgent.agent?.plan");
+        
 
       if (productAgent.agent?.plan === "plan 7") {
 
@@ -447,6 +449,7 @@ const createOrder = async (req, res) => {
 
         balanceTotal = (orderPrice * 25 / 100).toFixed(2)
       }
+console.log(balanceTotal,"===balanceTotal");
 
       const newOrder = await Order.create({
         user: userId,
@@ -477,7 +480,9 @@ const createOrder = async (req, res) => {
         receipt: `receipt_${createdOrders[0]._id}`,
       };
 
+
       razorpayOrder = await razorpay.orders.create(options);
+
 
       if (!razorpayOrder) {
         return res
@@ -495,9 +500,9 @@ const createOrder = async (req, res) => {
     }
 
     // Clear the cart
-    user.cart = [];
-    user.cart_total = 0;
-    await user.save();
+    // user.cart = [];
+    // user.cart_total = 0;
+    // await user.save(); 
 
     return res.status(201).json({
       success: true,
