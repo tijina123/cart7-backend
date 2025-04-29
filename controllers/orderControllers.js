@@ -413,33 +413,33 @@ const createOrder = async (req, res) => {
         });
 
 
-      if (productAgent.agent?.plan === "plan 8") {
+      if (productAgent.agent?.plan === "plan 7") {
 
         balanceTotal = (orderPrice * 10 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 7"){
+      } else if (productAgent.agent?.plan === "plan 6"){
 
         balanceTotal = (orderPrice * 12 / 100).toFixed(2)
 
       }
-       else if (productAgent.agent?.plan === "plan 6"){
+       else if (productAgent.agent?.plan === "plan 5"){
 
         balanceTotal = (orderPrice * 14 / 100).toFixed(2)
 
       }
-       else if (productAgent.agent?.plan === "plan 5"){
+       else if (productAgent.agent?.plan === "plan 4"){
 
         balanceTotal = (orderPrice * 16 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 4"){
+      } else if (productAgent.agent?.plan === "plan 3"){
 
         balanceTotal = (orderPrice * 18 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 3"){
+      } else if (productAgent.agent?.plan === "plan 2"){
 
         balanceTotal = (orderPrice * 20 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 2"){
+      } else if (productAgent.agent?.plan === "plan 1"){
 
         balanceTotal = (orderPrice * 22 / 100).toFixed(2)
 
