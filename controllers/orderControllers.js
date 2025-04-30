@@ -541,23 +541,59 @@ const shiprocketWebhook = async (req, res) => {
   } catch (error) {
     console.error("Webhook Error:", error);
     res.status(500).json({ message: "Webhook processing failed" });
-  }
+  } 
 };
 
 // Payment Verification
-const verifyPayment = (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+// const verifyPayment = (req, res) => {
+  
+//   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-  const body = razorpay_order_id + "|" + razorpay_payment_id;
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(body)
-    .digest("hex");
+//   const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-  if (expectedSignature === razorpay_signature) {
-    res.json({ success: true });
-  } else {
-    res.status(400).json({ success: false, message: "Invalid signature sent!" });
+//   const expectedSignature = crypto
+//     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+//     .update(body)
+//     .digest("hex");
+
+//   if (expectedSignature === razorpay_signature) {
+//     res.status(200).json({ success: true });
+//   } else {
+//     res.status(400).json({ success: false, message: "Invalid signature sent!" });
+//   }
+// };
+
+const verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    // Create expected signature using your Razorpay secret
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
+
+    // Compare signatures
+    if (expectedSignature === razorpay_signature) {
+      // ✅ Update paymentStatus to "Paid"
+      await Order.updateMany(
+        { razorpay_order_id },
+        {
+          $set: {
+            paymentStatus: "Paid",
+            razorpay_payment_id,
+          },
+        }
+      );
+
+      return res.status(200).json({ success: true, message: "Payment verified and order updated." });
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid signature sent!" });
+    }
+  } catch (error) {
+    console.error("Payment verification error:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 

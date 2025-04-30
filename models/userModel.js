@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
     image: { type: String },
     plan: {
       type: String,
-      enum: ["premium", "standard", "basic"]
+      // enum: ["premium", "standard", "basic"]
     },
     planValidUntil: {
       type: Date,
