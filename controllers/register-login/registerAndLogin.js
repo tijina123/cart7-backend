@@ -13,6 +13,7 @@ const signup = async (req, res, next) => {
     const {
       name,
       email,
+      phone,
       password,
       role,
       companyname: deler_name,
@@ -22,26 +23,26 @@ const signup = async (req, res, next) => {
     // Validate input based on the user's role
     if (role === "user") {
       // Ensure required fields for regular users
-      if (!password || !name || !role) {
+      if (!password || !name || !role || !phone) {
         const error = {
           status: 400,
           message: "Invalid input data",
           fields: {
             body: req.body,
-            required: { email, name, password },
+            required: { email, name, password,phone },
           },
         };
         return next(error);
       }
     } else {
       // Ensure required fields for dealers/admins
-      if (!password || !name || !role || !plan || !deler_name) {
+      if (!password || !name || !phone || !role || !plan || !deler_name) {
         const error = {
           status: 400,
           message: "Invalid input data",
           fields: {
             body: req.body,
-            required: { email, name, password },
+            required: { email, name, password, phone },
           },
         };
         return next(error);
@@ -49,7 +50,10 @@ const signup = async (req, res, next) => {
     }
 
     // Check if the email already exists in the database
-    const isExist = await User.findOne({ email });
+    const isExist = await User.findOne({
+      $or: [{ email }, { phone }],
+    });
+
     if (isExist) {
       return res.status(422).json({
         message: "User Already Exists",
@@ -68,6 +72,7 @@ const signup = async (req, res, next) => {
       isCreate = await User.create({
         name,
         email,
+        phone,
         role,
         isDelers: false,
         password: hashedPassword,
@@ -78,6 +83,7 @@ const signup = async (req, res, next) => {
         name,
         deler_name,
         email,
+        phone,
         role,
         plan,
         planValidUntil: new Date(Date.now() + PLAN_DURATION_DAYS * 24 * 60 * 60 * 1000),
