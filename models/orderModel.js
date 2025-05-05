@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema(
                 quantity: { type: Number, required: true },
             },
 
-        // agent: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        agent: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         shippingAddress: {
             street: String,
             city: String,
@@ -19,6 +19,7 @@ const orderSchema = new mongoose.Schema(
         },
         paymentMethod: { type: String, required: true },
         paymentStatus: { type: String, enum: ["Pending", "Paid", "Failed"], default: "Pending" },
+        paidAt: { type: Date, default: null },
         totalPrice: { type: Number, required: true },
         balanceTotal: { type: Number, required: true },
         // Delivery Statuses
