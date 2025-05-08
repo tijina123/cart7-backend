@@ -4,9 +4,9 @@ const morgan = require("morgan");
 const startCronJobs = require("./utils/cronJobs"); // Adjust path if needed
 const connectDb = require("./config/db");
 
-const passport = require("passport");
-const session = require("express-session");
-require("./passport");
+// const passport = require("passport");
+// const session = require("express-session");
+// require("./passport");
 
 const categoryRoute = require('./routes/categoryRoute');
 const productRoute = require('./routes/productRoute');
@@ -35,9 +35,9 @@ app.use(cors())
 app.use(express.json())
 
 
-app.use(session({ secret: "yourSecret", resave: false, saveUninitialized: true }));
-app.use(passport.initialize());
-app.use(passport.session());
+// app.use(session({ secret: "yourSecret", resave: false, saveUninitialized: true }));
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 app.use("/", userRoute);
 app.use("/category", categoryRoute);

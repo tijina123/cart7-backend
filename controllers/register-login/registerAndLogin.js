@@ -25,28 +25,22 @@ const signup = async (req, res, next) => {
       reenteredAccountNumber
     } = req.body;
 
-        // Validate input
-        if (!password || !name || !phone || !role || !email) {
-          return res.status(400).json({ message: "Missing required fields" });
-        }
-
-    if(role === !"user"){
-
     if (accountNumber !== reenteredAccountNumber) {
       return res.status(400).json({
         message: "Account number and re-entered account number do not match"
       });
     }
 
-
+    // Validate input
+    if (!password || !name || !phone || !role) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
     if (role !== "user" && (!plan || !deler_name || !beneficiaryName || !businessType || !ifscCode || !accountNumber)) {
       return res.status(400).json({
         message: "Missing required dealer fields"
       });
     }
-
-  }
 
     const isExist = await User.findOne({
       $or: [{ email }, { phone }]
@@ -75,19 +69,19 @@ const signup = async (req, res, next) => {
       });
     } else {
       // Razorpay Sub Account Creation
-      const razorpayAccount = await razorpay.accounts.create({
-        name: beneficiaryName,
-        email,
-        contact: phone,
-        type: businessType,
-        legal_business_name: beneficiaryName,
-        business_type: businessType,
-        bank_account: {
-          name: beneficiaryName,
-          ifsc: ifscCode,
-          account_number: accountNumber
-        }
-      });
+      // const razorpayAccount = await razorpay.accounts.create({
+      //   name: beneficiaryName,
+      //   email,
+      //   contact: phone,
+      //   type: businessType,
+      //   legal_business_name: beneficiaryName,
+      //   business_type: businessType,
+      //   bank_account: {
+      //     name: beneficiaryName,
+      //     ifsc: ifscCode,
+      //     account_number: accountNumber
+      //   }
+      // });
 
       // Save dealer with razorpay_account_id
       isCreate = await User.create({
