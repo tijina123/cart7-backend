@@ -34,7 +34,18 @@ const userSchema = new mongoose.Schema(
     },
     planValidUntil: {
       type: Date,
-    }, 
+    },
+    razorpay_account_id: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    razorpay_bank_details: {
+      beneficiaryName: { type: String },
+      businessType: { type: String },
+      ifscCode: { type: String },
+      accountNumber: { type: String }
+    },     
     status: {
       type: Boolean,
       required: [true, "Status is required"],

@@ -360,22 +360,19 @@ const orderStatusUpdate = async (req, res) => {
 
 //✅ Create Order and Push to Shiprocket
 const createOrder = async (req, res) => {
-
   try {
     const userId = req.userId;
-
     const { paymentMethod, currency = "INR" } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid user ID." });
     }
 
-    const shippingAddress = await Address.find({
+    const shippingAddress = await Address.findOne({
       user: userId,
       isDefault: true,
     });
 
-    // if (!address) {
     if (!shippingAddress) {
       return res.status(404).json({
         success: false,
@@ -390,68 +387,46 @@ const createOrder = async (req, res) => {
 
     let totalAmount = 0;
     const createdOrders = [];
+    const transfers = [];
 
     for (let cartItem of user.cart) {
       const product = cartItem.product;
       const quantity = cartItem.quantity;
 
-      if (!product) continue;
-
-      if (product.stock < quantity) {
-        return res
-          .status(400)
-          .json({ message: `Insufficient stock for ${product.name}` });
+      if (!product || product.stock < quantity) {
+        return res.status(400).json({
+          message: `Insufficient stock for ${product?.name || "Unknown"}`,
+        });
       }
 
       const orderPrice = (product.sale_price || product.product_price) * quantity;
       totalAmount += orderPrice;
 
-      let balanceTotal = null
+      // Fetch product agent
+      const productAgent = await Product.findById(product._id).populate({
+        path: "agent",
+        select: "plan razorpay_account_id",
+      });
 
-      const productAgent = await Product.findById(product?._id)
-        .populate({
-          path: "agent",
-          select: "plan planValidUntil", // Only get necessary fields
-        });
+      let commissionRate = 25;
 
-        console.log(productAgent.agent?.plan ,"====productAgent.agent?.plan");
-        
+      const planRateMap = {
+        "plan 1": 22,
+        "plan 2": 20,
+        "plan 3": 18,
+        "plan 4": 16,
+        "plan 5": 14,
+        "plan 6": 12,
+        "plan 7": 10,
+      };
 
-      if (productAgent.agent?.plan === "plan 7") {
-
-        balanceTotal = (orderPrice * 10 / 100).toFixed(2)
-
-      } else if (productAgent.agent?.plan === "plan 6"){
-
-        balanceTotal = (orderPrice * 12 / 100).toFixed(2)
-
+      const plan = productAgent?.agent?.plan;
+      if (plan && planRateMap[plan]) {
+        commissionRate = planRateMap[plan];
       }
-       else if (productAgent.agent?.plan === "plan 5"){
 
-        balanceTotal = (orderPrice * 14 / 100).toFixed(2)
-
-      }
-       else if (productAgent.agent?.plan === "plan 4"){
-
-        balanceTotal = (orderPrice * 16 / 100).toFixed(2)
-
-      } else if (productAgent.agent?.plan === "plan 3"){
-
-        balanceTotal = (orderPrice * 18 / 100).toFixed(2)
-
-      } else if (productAgent.agent?.plan === "plan 2"){
-
-        balanceTotal = (orderPrice * 20 / 100).toFixed(2)
-
-      } else if (productAgent.agent?.plan === "plan 1"){
-
-        balanceTotal = (orderPrice * 22 / 100).toFixed(2)
-
-      } else {
-
-        balanceTotal = (orderPrice * 25 / 100).toFixed(2)
-      }
-console.log(balanceTotal,"===balanceTotal");
+      const commission = (orderPrice * commissionRate) / 100;
+      const balanceTotal = (orderPrice - commission).toFixed(2);
 
       const newOrder = await Order.create({
         user: userId,
@@ -462,7 +437,8 @@ console.log(balanceTotal,"===balanceTotal");
         shippingAddress,
         paymentMethod,
         totalPrice: orderPrice,
-        balanceTotal: orderPrice - balanceTotal
+        balanceTotal,
+        agent: productAgent?.agent?._id,
       });
 
       // Reduce stock
@@ -470,21 +446,33 @@ console.log(balanceTotal,"===balanceTotal");
       await product.save();
 
       createdOrders.push(newOrder);
+
+      // Prepare Razorpay transfer if online payment and agent has sub-account
+      if (paymentMethod !== "COD" && productAgent?.agent?.razorpay_account_id) {
+        transfers.push({
+          account: productAgent.agent.razorpay_account_id,
+          amount: Math.round(balanceTotal * 100), // in paise
+          currency,
+          notes: {
+            order_id: newOrder._id.toString(),
+            product: product.name,
+          },
+          on_hold: false,
+        });
+      }
     }
 
     let razorpayOrder = null;
 
-    // Create one Razorpay order if payment is not COD
     if (paymentMethod !== "COD") {
       const options = {
-        amount: totalAmount * 100, // in paise
+        amount: totalAmount * 100,
         currency,
         receipt: `receipt_${createdOrders[0]._id}`,
+        transfers,
       };
 
-
       razorpayOrder = await razorpay.orders.create(options);
-
 
       if (!razorpayOrder) {
         return res
@@ -492,7 +480,7 @@ console.log(balanceTotal,"===balanceTotal");
           .json({ message: "Razorpay order creation failed" });
       }
 
-      // Save razorpay ID to all orders
+      // Save Razorpay order ID in each order
       await Promise.all(
         createdOrders.map(async (order) => {
           order.razorpay_order_id = razorpayOrder.id;
@@ -501,15 +489,10 @@ console.log(balanceTotal,"===balanceTotal");
       );
     }
 
-    // Clear the cart
-    // user.cart = [];
-    // user.cart_total = 0;
-    // await user.save(); 
-
     return res.status(201).json({
       success: true,
       paymentMethod,
-      message: "Orders created successfully from cart",
+      message: "Orders created successfully",
       orders: createdOrders,
       totalAmount,
       razorpayOrder: razorpayOrder || null,
@@ -521,6 +504,7 @@ console.log(balanceTotal,"===balanceTotal");
       .json({ message: "Internal Server Error", error: error.message });
   }
 };
+
 
 // ✅ 
 const shiprocketWebhook = async (req, res) => {
@@ -543,12 +527,12 @@ const shiprocketWebhook = async (req, res) => {
   } catch (error) {
     console.error("Webhook Error:", error);
     res.status(500).json({ message: "Webhook processing failed" });
-  } 
+  }
 };
 
 // Payment Verification
 // const verifyPayment = (req, res) => {
-  
+
 //   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
 //   const body = razorpay_order_id + "|" + razorpay_payment_id;

@@ -1,4 +1,6 @@
 const { User } = require("../../models/userModel");
+const razorpay = require("../../utils/razorpay.js");
+
 const {
   generatePasswordHash,
   comparePasswordHash,
@@ -8,8 +10,6 @@ const { generateAccessToken } = require("../../utils/jwt");
 // ✅ Register - User Signup
 const signup = async (req, res, next) => {
   try {
-    console.log("Request body:===", req.body);
-    // Extract user details from the request body
     const {
       name,
       email,
@@ -18,56 +18,51 @@ const signup = async (req, res, next) => {
       role,
       companyname: deler_name,
       plan,
+      beneficiaryName,
+      businessType,
+      ifscCode,
+      accountNumber,
+      reenteredAccountNumber
     } = req.body;
 
-    // Validate input based on the user's role
-    if (role === "user") {
-      // Ensure required fields for regular users
-      if (!password || !name || !role || !phone) {
-        const error = {
-          status: 400,
-          message: "Invalid input data",
-          fields: {
-            body: req.body,
-            required: { email, name, password,phone },
-          },
-        };
-        return next(error);
-      }
-    } else {
-      // Ensure required fields for dealers/admins
-      if (!password || !name || !phone || !role || !plan || !deler_name) {
-        const error = {
-          status: 400,
-          message: "Invalid input data",
-          fields: {
-            body: req.body,
-            required: { email, name, password, phone },
-          },
-        };
-        return next(error);
-      }
+        // Validate input
+        if (!password || !name || !phone || !role || !email) {
+          return res.status(400).json({ message: "Missing required fields" });
+        }
+
+    if(role === !"user"){
+
+    if (accountNumber !== reenteredAccountNumber) {
+      return res.status(400).json({
+        message: "Account number and re-entered account number do not match"
+      });
     }
 
-    // Check if the email already exists in the database
+
+
+    if (role !== "user" && (!plan || !deler_name || !beneficiaryName || !businessType || !ifscCode || !accountNumber)) {
+      return res.status(400).json({
+        message: "Missing required dealer fields"
+      });
+    }
+
+  }
+
     const isExist = await User.findOne({
-      $or: [{ email }, { phone }],
+      $or: [{ email }, { phone }]
     });
 
     if (isExist) {
       return res.status(422).json({
-        message: "User Already Exists",
+        message: "User Already Exists"
       });
     }
 
-    // Hash the password before storing it
     const hashedPassword = await generatePasswordHash(password);
+    const PLAN_DURATION_DAYS = 30;
 
     let isCreate = null;
 
-    const PLAN_DURATION_DAYS = 30;
-    
-    // Create a new user based on their role
     if (role === "user") {
       isCreate = await User.create({
         name,
@@ -76,42 +71,57 @@ const signup = async (req, res, next) => {
         role,
         isDelers: false,
         password: hashedPassword,
-        status: true,
+        status: true
       });
     } else {
+      // Razorpay Sub Account Creation
+      const razorpayAccount = await razorpay.accounts.create({
+        name: beneficiaryName,
+        email,
+        contact: phone,
+        type: businessType,
+        legal_business_name: beneficiaryName,
+        business_type: businessType,
+        bank_account: {
+          name: beneficiaryName,
+          ifsc: ifscCode,
+          account_number: accountNumber
+        }
+      });
+
+      // Save dealer with razorpay_account_id
       isCreate = await User.create({
         name,
-        deler_name,
         email,
         phone,
         role,
         plan,
-        planValidUntil: new Date(Date.now() + PLAN_DURATION_DAYS * 24 * 60 * 60 * 1000),
+        planValidUntil: new Date(Date.now() + PLAN_DURATION_DAYS * 86400000),
         isDelers: true,
+        deler_name,
         password: hashedPassword,
         status: false,
+        razorpay_account_id: razorpayAccount.id,
+        razorpay_bank_details: {
+          beneficiaryName,
+          businessType,
+          ifscCode,
+          accountNumber
+        }
       });
     }
 
-    // If user creation fails, return an error
-    if (!isCreate) {
-      const error = {
-        status: 500,
-        message: "Account creation failed",
-      };
-      return next(error);
-    }
-
-    // Respond with success message
     res.status(201).json({
       success: true,
-      message: "Account has been created successfully",
+      message: "Account has been created successfully"
     });
   } catch (error) {
     console.error("Error creating user:", error);
-    next(error); // Pass error to error-handling middleware
+    next(error);
   }
 };
+
+
 
 // ✅ Login - User Authentication
 const login = async (req, res, next) => {
@@ -133,7 +143,7 @@ const login = async (req, res, next) => {
     }
 
     // Check if user exists in the database
-    const user = await User.findOne({ email , isActive: true  });
+    const user = await User.findOne({ email, isActive: true });
 
     if (!user) {
       const error = {
