@@ -6,7 +6,7 @@ const connectDb = require("./config/db");
 
 // const passport = require("passport");
 // const session = require("express-session");
-// require("./passport");
+// require("./utils/passport");
 
 const categoryRoute = require('./routes/categoryRoute');
 const productRoute = require('./routes/productRoute');
@@ -46,7 +46,7 @@ app.use("/address", addressRoute);
 app.use("/offer", offerRoute);
 app.use("/order", orderRoute);
 
-app.use("/api/auth", authRoutes);
+// app.use("/api/auth", authRoutes);
 
 //  Error Handling
 app.use(errorHandle);
