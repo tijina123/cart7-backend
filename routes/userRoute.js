@@ -1,5 +1,5 @@
 const express = require("express")
-const registerAndLogin = require("../controllers/register-login/registerAndLogin")
+const registerAndLogin = require("../controllers/registerAndLogin")
 const userController = require("../controllers/userController")
 const cartController = require("../controllers/cartController")
 const wishlistController = require("../controllers/wishlistController")
@@ -10,6 +10,8 @@ const router = express.Router()
 
 router.post("/signup", registerAndLogin.signup);
 router.post("/login",registerAndLogin.login);
+
+router.post('/google-login', registerAndLogin.googleLoginController); 
 
 // Cart Management
 router.get("/cart",checkAuth, cartController.getCart);

@@ -210,7 +210,7 @@ const getSingleProduct = async (req, res) => {
       return res.status(400).json({ message: "id is required" });
     }
 
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).populate("category");;
 
     if (!product) {
       return res.status(404).json({

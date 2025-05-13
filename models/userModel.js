@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      // required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
     },
     phone: {
@@ -27,6 +27,17 @@ const userSchema = new mongoose.Schema(
       // required: [true, "Phone number is required"],
       match: [/^\d{10}$/, "Phone number must be exactly 10 digits"],
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows multiple users without a googleId
+    },
+    loginMethod: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+
     image: { type: String },
     plan: {
       type: String,
@@ -34,7 +45,18 @@ const userSchema = new mongoose.Schema(
     },
     planValidUntil: {
       type: Date,
-    }, 
+    },
+    razorpay_account_id: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    razorpay_bank_details: {
+      beneficiaryName: { type: String },
+      businessType: { type: String },
+      ifscCode: { type: String },
+      accountNumber: { type: String }
+    },
     status: {
       type: Boolean,
       required: [true, "Status is required"],
