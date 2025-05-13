@@ -198,6 +198,30 @@ const getProductsByCategory = async (req, res) => {
   }
 };
 
+const getProductsBySearch = async (req, res) => {
+try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ message: "Name query parameter is required." });
+    }
+
+    const products = await Product.find({
+      name: { $regex: name, $options: "i" } // case-insensitive match
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Products retrieved successfully.",
+      products
+    }
+    );
+  } catch (err) {
+    console.error("Error searching products:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 // ✅ Get Single product
 const getSingleProduct = async (req, res) => {
@@ -687,4 +711,5 @@ module.exports = {
   toggleProductStatus,
   getProductsByAgent,
   updateProductOffer,
+  getProductsBySearch
 };

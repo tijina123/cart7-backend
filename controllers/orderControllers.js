@@ -502,9 +502,9 @@ console.log(balanceTotal,"===balanceTotal");
     }
 
     // Clear the cart
-    // user.cart = [];
-    // user.cart_total = 0;
-    // await user.save(); 
+    user.cart = [];
+    user.cart_total = 0;
+    await user.save(); 
 
     return res.status(201).json({
       success: true,

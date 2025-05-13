@@ -9,6 +9,7 @@ const productSchema = new mongoose.Schema(
     sale_price: { type: Number, required: true },
     offer: { type: mongoose.Schema.Types.ObjectId, ref: "Offer" },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+    isVarient: { type: Boolean, default: false },
     varient: [
       {
         colour_varient: { 
