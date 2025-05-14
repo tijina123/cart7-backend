@@ -155,11 +155,29 @@ const isproductAvailabe = async (req, res) => {
 // ✅
 const getAllOrder = async (req, res) => {
   try {
+    //  const agentId = req.params.agentId || req.userId; // use req.userId if agent is authenticated user
+
     const userId = req.userId;
 
-    const orders = await Order.find()
-      .populate("user", "name phone") // Populate user fields (adjust as needed)
-      .populate("orderItems.product", "name sale_price images"); // Populate product fields
+    const user = await User.findById(userId);
+
+    let orders = null
+
+    if (user.role === "Super Admin") {
+      
+      orders = await Order.find()
+        .populate("user", "name phone") // Populate user fields (adjust as needed)
+        .populate("orderItems.product", "name sale_price images"); // Populate product fields
+
+    } else if (user.role === "admin") {
+
+      orders = await Order.find({ agent: userId })
+        .populate("user", "name phone") // Populate user info
+        .populate("orderItems.product", "name sale_price images"); // Populate product info
+
+    }
+
+
     // Validation: Check if orders exist
     if (!orders || orders.length === 0) {
       return res.status(400).json({
@@ -414,36 +432,36 @@ const createOrder = async (req, res) => {
           select: "plan planValidUntil", // Only get necessary fields
         });
 
-        console.log(productAgent.agent?.plan ,"====productAgent.agent?.plan");
-        
+      console.log(productAgent.agent?.plan, "====productAgent.agent?.plan");
+
 
       if (productAgent.agent?.plan === "plan 7") {
 
         balanceTotal = (orderPrice * 10 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 6"){
+      } else if (productAgent.agent?.plan === "plan 6") {
 
         balanceTotal = (orderPrice * 12 / 100).toFixed(2)
 
       }
-       else if (productAgent.agent?.plan === "plan 5"){
+      else if (productAgent.agent?.plan === "plan 5") {
 
         balanceTotal = (orderPrice * 14 / 100).toFixed(2)
 
       }
-       else if (productAgent.agent?.plan === "plan 4"){
+      else if (productAgent.agent?.plan === "plan 4") {
 
         balanceTotal = (orderPrice * 16 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 3"){
+      } else if (productAgent.agent?.plan === "plan 3") {
 
         balanceTotal = (orderPrice * 18 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 2"){
+      } else if (productAgent.agent?.plan === "plan 2") {
 
         balanceTotal = (orderPrice * 20 / 100).toFixed(2)
 
-      } else if (productAgent.agent?.plan === "plan 1"){
+      } else if (productAgent.agent?.plan === "plan 1") {
 
         balanceTotal = (orderPrice * 22 / 100).toFixed(2)
 
@@ -451,7 +469,7 @@ const createOrder = async (req, res) => {
 
         balanceTotal = (orderPrice * 25 / 100).toFixed(2)
       }
-console.log(balanceTotal,"===balanceTotal");
+      console.log(balanceTotal, "===balanceTotal");
 
       const newOrder = await Order.create({
         user: userId,
@@ -504,7 +522,7 @@ console.log(balanceTotal,"===balanceTotal");
     // Clear the cart
     user.cart = [];
     user.cart_total = 0;
-    await user.save(); 
+    await user.save();
 
     return res.status(201).json({
       success: true,

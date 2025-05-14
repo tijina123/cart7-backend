@@ -7,11 +7,15 @@ const { checkAuth } = require("../middlewares/checkAuth");
 const router = express.Router()
 
 
-
 router.post("/signup", registerAndLogin.signup);
 router.post("/login",registerAndLogin.login);
+router.post('/google-login', registerAndLogin.googleLoginController);
 
-router.post('/google-login', registerAndLogin.googleLoginController); 
+// User Management
+router.get("/",checkAuth, userController.getUser);
+router.put("/admin/toggle-status/:id", userController.toggleUserStatus ); //→ Update a category (admin)
+router.get("/detail",checkAuth, userController.getUserById);
+router.put("/detail",checkAuth, userController.getUserById);
 
 // Cart Management
 router.get("/cart",checkAuth, cartController.getCart);
@@ -23,13 +27,6 @@ router.delete("/cart/:productId",  checkAuth, cartController.removeFromCart);
 router.get("/wishlist", checkAuth, wishlistController.getWishlist);
 router.post("/wishlist", checkAuth, wishlistController.addToWishlist);
 router.delete("/wishlist/:productId",checkAuth, wishlistController.removeFromWishlist);
-router.get("/", userController.getUser);
-router.put("/admin/toggle-status/:id", userController.toggleUserStatus ); //→ Update a category (admin)
-router.get("/detail",checkAuth, userController.getUserById);
-router.put("/detail",checkAuth, userController.getUserById);
-// Product Management
-
-
 
 
 
