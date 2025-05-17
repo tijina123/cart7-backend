@@ -35,35 +35,23 @@ const allowedOrigins = [
   "http://localhost:5174"
 ];
 
-// Use this setup
-// app.use(cors({
-//   origin: "https://www.cart7online.com", // Your frontend domain
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   credentials: true, // if you're using cookies / authentication
-// }));
 
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     // Allow requests with no origin (like mobile apps or curl)
-//     if (!origin) return callback(null, true);
-//     if (allowedOrigins.includes(origin)) {
-//       return callback(null, true);
-//     } else {
-//       return callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   credentials: true,
-// }));
 
-// Use this setup
 app.use(cors({
-  origin: "https://www.cart7online.com", // Your frontend domain
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true, // if you're using cookies / authentication
+  credentials: true,
 }));
 
-app.options("*", cors()); // handle preflight
+//app.options("*", cors()); // handle preflight
 
 
 app.use(express.json())
