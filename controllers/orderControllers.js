@@ -246,62 +246,7 @@ const getAllOrdersByUser = async (req, res) => {
   }
 };
 
-//✅ Update Order Delivery Status
-const orderStatusUpdateOld = async (req, res) => {
-  const { orderId } = req.params;
-  const { deliveryStatus } = req.body;
 
-  if (!orderId) {
-    return res.status(400).json({ message: "Order ID is required" });
-  }
-  if (!deliveryStatus) {
-    return res.status(400).json({ message: "Delivery status is required" });
-  }
-
-  const validStatuses = [
-    "Pending",
-    "Processing",
-    "Shipped",
-    "Out for Delivery",
-    "Delivered",
-    "Cancelled",
-    "Returned",
-    "Failed Delivery",
-  ];
-
-  try {
-    // Validate orderId
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ message: "Invalid order ID" });
-    }
-
-    // Validate delivery status
-    if (!validStatuses.includes(deliveryStatus)) {
-      return res.status(400).json({ message: "Invalid delivery status" });
-    }
-
-    // Find the order
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    // Update delivery status
-    order.deliveryStatus = deliveryStatus;
-
-    // If status is "Delivered", set deliveredAt timestamp
-    if (deliveryStatus === "Delivered") {
-      order.deliveredAt = new Date();
-    }
-
-    await order.save();
-
-    res.json({ message: "Delivery status updated successfully", order });
-  } catch (error) {
-    console.error("Error updating delivery status:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
 
 // ✅
 const orderStatusUpdate = async (req, res) => {
@@ -381,6 +326,7 @@ const createOrder = async (req, res) => {
 
   try {
     const userId = req.userId;
+console.log("createOrder");
 
     const { paymentMethod, currency = "INR" } = req.body;
 
@@ -473,6 +419,7 @@ const createOrder = async (req, res) => {
 
       const newOrder = await Order.create({
         user: userId,
+        agent:productAgent.agent?._id,
         orderItems: {
           product: product._id,
           quantity,
@@ -540,50 +487,6 @@ const createOrder = async (req, res) => {
   }
 };
 
-
-// ✅ 
-const shiprocketWebhook = async (req, res) => {
-  try {
-    console.log("Webhook Received:", req.body);
-
-    const { order_id, status, awb_code, courier_name } = req.body;
-
-    const order = await Order.findById(order_id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-
-    order.deliveryStatus = status;
-    order.awb_code = awb_code;
-    order.courier_name = courier_name;
-
-    if (status === "Delivered") order.deliveredAt = new Date();
-
-    await order.save();
-    res.status(200).send("Webhook processed successfully");
-  } catch (error) {
-    console.error("Webhook Error:", error);
-    res.status(500).json({ message: "Webhook processing failed" });
-  }
-};
-
-// Payment Verification
-// const verifyPayment = (req, res) => {
-
-//   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-
-//   const body = razorpay_order_id + "|" + razorpay_payment_id;
-
-//   const expectedSignature = crypto
-//     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-//     .update(body)
-//     .digest("hex");
-
-//   if (expectedSignature === razorpay_signature) {
-//     res.status(200).json({ success: true });
-//   } else {
-//     res.status(400).json({ success: false, message: "Invalid signature sent!" });
-//   }
-// };
-
 const verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -620,7 +523,6 @@ const verifyPayment = async (req, res) => {
 
 module.exports = {
   createOrder,
-  shiprocketWebhook,
   isproductAvailabe,
   getAllOrder,
   orderStatusUpdate,

@@ -14,12 +14,3 @@ router.put("/admin/toggle-status/:id", categoryController.toggleCategoryStatus )
 
 
 module.exports = router; 
-
-// import { User } from "../models/userModel.js"; 
-// import { validateRequest } from "../middlewares/validateRequest.js";
-
-// app.post("/users", validateRequest(User.schema.obj), (req, res) => {
-//     // Create user logic here
-// });
-
-// All required fields must be provided

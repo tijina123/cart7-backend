@@ -12,7 +12,7 @@ const addressRoute = require('./routes/addressRoute');
 const orderRoute = require('./routes/orderRoute');
 const offerRoute = require('./routes/offerRoute');
 const errorHandle = require("./middlewares/errorHandle");
-const authRoutes = require("./routes/auth");
+// const authRoutes = require("./routes/auth");
 
 
 
@@ -64,7 +64,6 @@ app.use("/address", addressRoute);
 app.use("/offer", offerRoute);
 app.use("/order", orderRoute);
 
-// app.use("/api/auth", authRoutes);
 
 //  Error Handling
 app.use(errorHandle);

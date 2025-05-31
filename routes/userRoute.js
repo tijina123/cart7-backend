@@ -13,7 +13,7 @@ router.post('/google-login', registerAndLogin.googleLoginController);
 
 // User Management
 router.get("/",checkAuth, userController.getUser);
-router.put("/admin/toggle-status/:id", userController.toggleUserStatus ); //→ Update a category (admin)
+router.put("/admin/toggle-status/:id", userController.toggleUserStatus );
 router.get("/detail",checkAuth, userController.getUserById);
 router.put("/detail",checkAuth, userController.getUserById);
 
